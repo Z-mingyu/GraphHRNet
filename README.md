@@ -31,9 +31,13 @@ This repository contains the pytorch implementation of the approach described in
 
 [comment]: <> (```)
 
-## Introduction
+## Introduction & Dataset
 
 We train and evaluate models for 3D whole-body pose estimation on the [H3WB](https://github.com/wholebody3d/wholebody3d).
+
+Train_data[Download Link.](https://drive.google.com/file/d/1eCV-oxneE6NTnsO3z_eR_uLaE6wByx2J/view?usp=drive_link)
+Test_data[Download Link.](https://drive.google.com/file/d/1vtYZiUQu6X_aT6vx2bb0sNdGIkS7xY3A/view?usp=drive_link)
+Please put the train_data and test_data in the data directory
 
 Whole-body 2D joints of the human pose are exploited as inputs. 2D poses are scaled according to the image resolution and normalized to [-1, 1]; 3D poses are aligned with respect to the root joint and the unit of 3D pose data changed from millimeter to meter. 
 
@@ -50,31 +54,31 @@ pip install -r requirements.txt
 
 ### GT Evaluation 
 ```
-python HRNet_WB.py --gcn {gcn_name}  --evaluate checkpoint/{weight_name}.pth.tar
+python HRNet_GCN_WB.py --gcn {gcn_name}  --evaluate checkpoint/{weight_name}.pth.tar
 ```
 
 ### GT Training 
 ```
 # Decoupled Vanilla GCN (What method used in paper)
-python HRNet_WB.py --gcn dc_vanilla
+python HRNet_GCN_WB.py --gcn dc_vanilla
 
 # Decoupled Pre-Aggresive GCN (What method used in paper)
-python HRNet_WB.py --gcn dc_preagg
+python HRNet_GCN_WB.py --gcn dc_preagg
 
 # Semantic GCN (What method used in paper)
-python HRNet_WB.py --gcn semantic
+python HRNet_GCN_WB.py --gcn semantic
 
 # Decoupled Post-Aggresive GCN
-python HRNet_WB.py --gcn dc_postagg
+python HRNet_GCN_WB.py --gcn dc_postagg
 
 # Convolution-style GCN
-python HRNet_WB.py --gcn convst
+python HRNet_GCN_WB.py --gcn convst
 
 # No-sharing GCN
-python HRNet_WB.py --gcn nosharing
+python HRNet_GCN_WB.py --gcn nosharing
 
 # Modulated GCN
-python HRNet_WB.py --gcn modulated
+python HRNet_GCN_WB.py --gcn modulated
 ```
 
 
@@ -82,6 +86,7 @@ python HRNet_WB.py --gcn modulated
 The best checkpoint has been uploaded with  hyper-parameters and configuration file
 
 [Download Link.](https://drive.google.com/file/d/1FQpAnNyycKXgqlJ7vitFgP7KDwD365sQ/view?usp=sharing)
+
 
 ### Acknowledgement
 This code is extended from the following repositories.
