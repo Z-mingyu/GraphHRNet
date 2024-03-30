@@ -1,6 +1,5 @@
 from __future__ import print_function, absolute_import, division
 
-import random
 import os
 import time
 import datetime
@@ -81,17 +80,6 @@ def parse_args():
     return args
 
 
-def same_seeds(seed):
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        #torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
-    np.random.seed(seed)  # Numpy module.
-    random.seed(seed)  # Python random module.
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
-
-
 # S1, S5, S6 and S7, including 80k {image,2D,3D} triplets. The test set contains all samples from S8, including 20k triplets.
 def main(args):
     print('==> Using settings {}'.format(args))
@@ -123,9 +111,11 @@ def main(args):
 
     model_post_refine = None
     cfg.merge_from_file(args.configuration)
+
+    # select the model you would like to use.The next four backbone networks are ResNet,GraphHRNet,GraphSH,GraphHRNet_Multibranch
     # model_pos = GraphRes.get_pose_net(True, adj, p_dropout, args.gcn, 50, True).to(device)
-    model_pos = ghr.get_pose_net(cfg, True, adj, p_dropout, args.gcn, dataset.skeleton().joints_group()).to(device)
-    #model_pos = ghrmb.get_pose_net(cfg, True, adj, p_dropout, args.gcn, dataset.skeleton().joints_group()).to(device)
+    # model_pos = ghr.get_pose_net(cfg, True, adj, p_dropout, args.gcn, dataset.skeleton().joints_group()).to(device)
+    model_pos = ghrmb.get_pose_net(cfg, True, adj, p_dropout, args.gcn, dataset.skeleton().joints_group()).to(device)
     # model_pos = GraphSH(adj, args.hid_dim, dataset.skeleton().joints_group(), num_layers=args.num_layers,
     #                     p_dropout=p_dropout, gcn_type=args.gcn).to(device)
 
@@ -164,14 +154,20 @@ def main(args):
         error_best = None
         glob_step = 0
         lr_now = args.lr
-        #ckpt_dir_path = path.join(args.checkpoint,
-                                  # args.gcn + '-' + datetime.datetime.now().replace(microsecond=0).isoformat())
-        # ckpt_dir_path = path.join('GraphSH',
-        #                           args.gcn + '-' + datetime.datetime.now().replace(microsecond=0).isoformat())
-        # ckpt_dir_path = path.join('GraphRes',
-        #                           args.gcn + '-' + datetime.datetime.now().replace(microsecond=0).isoformat())
-        ckpt_dir_path = path.join('GraphHRNet',
+
+        # save checkpoint to corresponding folder
+        ckpt_dir_path = path.join(args.checkpoint, "GraphHRNet_Multibranch",
                                   args.gcn + '-' + datetime.datetime.now().replace(microsecond=0).isoformat())
+
+        # ckpt_dir_path = path.join(args.checkpoint,'GraphSH',
+        #                           args.gcn + '-' + datetime.datetime.now().replace(microsecond=0).isoformat())
+
+        # ckpt_dir_path = path.join(args.checkpoint,'GraphRes',
+        #                           args.gcn + '-' + datetime.datetime.now().replace(microsecond=0).isoformat())
+
+        # ckpt_dir_path = path.join(args.checkpoint,'GraphHRNet',
+        # args.gcn + '-' + datetime.datetime.now().replace(microsecond=0).isoformat())
+
         if not path.exists(ckpt_dir_path):
             os.makedirs(ckpt_dir_path)
             print('==> Making checkpoint dir: {}'.format(ckpt_dir_path))
@@ -190,7 +186,6 @@ def main(args):
 
         if action_filter is None:
             action_filter = dataset.define_actions()
-
 
         error_eval_p1 = np.zeros(len(action_filter))
         error_body = np.zeros(len(action_filter))
@@ -224,7 +219,7 @@ def main(args):
 
     poses_train, poses_train_2d, actions_train, cam_train = fetch(subjects_train, dataset, keypoints, action_filter,
                                                                   stride)
-    # poses_train is a nested list whose last two dimensions are same and first two dimensions are different
+    #poses_train is a nested list whose last two dimensions are same and first two dimensions are different
 
     train_loader = DataLoader(PoseGenerator(poses_train, poses_train_2d, actions_train, cam_train),
                               batch_size=args.batch_size,
@@ -240,8 +235,6 @@ def main(args):
     for epoch in range(start_epoch, args.epochs):
         print('\nEpoch: %d | LR: %.8f' % (epoch + 1, lr_now))
 
-        # Train for one epoch
-        # print(len(train_loader))
         epoch_loss, lr_now, glob_step = train(train_loader, model_pos, model_post_refine,
                                               args.lamda, criterion, criterionL1, optimizer,
                                               device, args.lr, lr_now,
@@ -299,18 +292,8 @@ def train(data_loader, model_pos, model_post_refine, lamda, criterion, criterion
             lr_now = lr_decay(optimizer, step, lr_init, decay, gamma)
 
         targets_3d, inputs_2d, batch_cam = targets_3d.to(device), inputs_2d.to(device), batch_cam.to(device)
-        # body_3d, face_3d, hand_3d = model_pos(inputs_2d)
         body_3d, face_3d, left_hand_3d, right_hand_3d = model_pos(inputs_2d)
 
-        # if model_post_refine is not None:
-        #     uvd = torch.cat((inputs_2d.unsqueeze(1), outputs_3d[:, None, :, 2].unsqueeze(-1)), -1)
-        #     xyz = get_uvd2xyz(uvd, targets_3d[:, None], batch_cam).squeeze()
-        #     xyz[:, 0, :] = 0
-        #
-        #     post_out = model_post_refine(outputs_3d, xyz)  # 放在输出层
-        #     loss_sym = sym_penalty(post_out)
-        #     loss_post_refine = mpjpe(post_out, targets_3d) + 0.01 * loss_sym
-        # else:
         loss_post_refine = 0
 
         optimizer.zero_grad()
@@ -404,8 +387,6 @@ def evaluate(data_loader, model_pos, device):
 
         epoch_loss_3d_hand_aligned.update(mpjpe(hand_3d_aligned, hand_3d_aligned_gt).item() * 1000, num_poses)
 
-        # epoch_loss_3d_pos_procrustes.update(
-        #     p_mpjpe(outputs_3d.to('cpu').numpy(), targets_3d.to('cpu').numpy()).item() * 1000, num_poses)
 
         # Measure elapsed time
         batch_time.update(time.time() - end)
