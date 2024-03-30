@@ -54,12 +54,12 @@ cd GraphHRNet
 pip install -r requirements.txt
 ```
 
-### GT Evaluation 
+### Evaluation 
 ```
 python HRNet_GCN_WB.py --gcn {gcn_name}  --evaluate checkpoint/{weight_name}.pth.tar
 ```
 
-### GT Training 
+### Training 
 ```
 # Decoupled Vanilla GCN (What method used in paper)
 python HRNet_GCN_WB.py --gcn dc_vanilla
