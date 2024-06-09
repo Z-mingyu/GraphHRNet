@@ -185,7 +185,7 @@ class _SkeletalUnpool(nn.Module):
 
 
 class Bottleneck(nn.Module):
-    expansion = 2  # 鉴于特征融合大概是节点数除以2，所以特征长度乘以2
+    expansion = 1  # 鉴于特征融合大概是节点数除以2，所以特征长度乘以2
 
     def __init__(self, adj, input_dim, output_dim, p_dropout, gcn_type, nodes_group, pooling=False,
                  channel_change=False):
@@ -194,7 +194,7 @@ class Bottleneck(nn.Module):
 
         self.gconv2 = _GraphConv(adj, output_dim, output_dim, p_dropout, gcn_type)
 
-        self.gconv4 = _GraphConv(adj, input_dim, output_dim * self.expansion, p_dropout, gcn_type)
+        #self.gconv4 = _GraphConv(adj, input_dim, output_dim * self.expansion, p_dropout, gcn_type)
         self.gconv3 = _GraphConv(adj, output_dim, output_dim * self.expansion, p_dropout, gcn_type)
         self.pooling = pooling
         self.pool = _SkeletalPool(nodes_group)
@@ -206,7 +206,7 @@ class Bottleneck(nn.Module):
 
         out = self.gconv1(x)
 
-        # out = self.gconv2(out)
+        out = self.gconv2(out)
 
         out = self.gconv3(out)
 
@@ -437,7 +437,7 @@ class PoseHighResolutionNet(nn.Module):
         # stem net
         self.gconv1 = _GraphConv(adj, 2, 32, p_dropout, gcn_type)
 
-        self.gconv2 = _GraphConv(adj, 32, 32, p_dropout, gcn_type)
+        #self.gconv2 = _GraphConv(adj, 32, 32, p_dropout, gcn_type)
 
         self.layer1 = self._make_layer(BasicBlock, 32, 1)
 
@@ -464,15 +464,15 @@ class PoseHighResolutionNet(nn.Module):
 
         self.output_cfg = extra['OUTPUT']
         num_channels = self.output_cfg['NUM_CHANNELS']
-        self.body_branch = BasicBlock(adj[:23, :23], pre_stage_channels[0], num_channels[0], p_dropout, gcn_type,self.nodes_group)
-        self.head_branch = BasicBlock(adj[23:91, 23:91], pre_stage_channels[0], num_channels[1], p_dropout, gcn_type,self.nodes_group)
-        self.left_hand_branch = BasicBlock(adj[91:112, 91:112], pre_stage_channels[0], num_channels[2], p_dropout,
+        self.body_branch = Bottleneck(adj[:23, :23], pre_stage_channels[0], num_channels[0], p_dropout, gcn_type,self.nodes_group)
+        self.head_branch = Bottleneck(adj[23:91, 23:91], pre_stage_channels[0], num_channels[1], p_dropout, gcn_type,self.nodes_group)
+        self.left_hand_branch = Bottleneck(adj[91:112, 91:112], pre_stage_channels[0], num_channels[2], p_dropout,
                                           gcn_type,self.nodes_group)
-        self.right_hand_branch = BasicBlock(adj[112:, 112:], pre_stage_channels[0], num_channels[3], p_dropout, gcn_type,self.nodes_group)
+        self.right_hand_branch = Bottleneck(adj[112:, 112:], pre_stage_channels[0], num_channels[3], p_dropout, gcn_type,self.nodes_group)
 
         # self.se_blocks = SEBlock(adj, num_channels[0])
         self.gconv_output = nn.Conv1d(num_channels[0], 3, (1,))
-        self.gconv_output_body = nn.Conv1d(num_channels[0] , 3, (1,))
+
 
     # 这个函数工作仅仅是从前一个stage的最后一个branch下采样出后一个 stage的新的branch，图示中在transition处有多层融合不知道是如何实现的
     def _make_transition_layer(
@@ -572,7 +572,7 @@ class PoseHighResolutionNet(nn.Module):
     def forward(self, x):
         x = self.gconv1(x)
 
-        # x = self.gconv2(x)
+
 
         x = self.layer1(x)
 
@@ -592,14 +592,13 @@ class PoseHighResolutionNet(nn.Module):
                 x_list.append(y_list[i])
         y_list = self.stage3(x_list)
 
-        x=self.gconv2(x)
         out_left_hand =(y_list[0][:, 91:112, :] + x[:, 91:112, :])/2
         out_right_hand =(y_list[0][:, 112:, :] + x[:, 112:, :])/2
         out_head=(y_list[0][:, 23:91, :] + x[:, 23:91, :])/2
         y_list[0] = self.Sigmoid(y_list[0])
-        # out_body = self.body_branch(y_list[0][:, :23, :])
+
         out_head = self.head_branch(out_head)
-        # out_hand = self.hand_branch(y_list[0][:, 91:, :])
+
         out_left_hand = self.left_hand_branch(out_left_hand)
         out_right_hand = self.right_hand_branch(out_right_hand)
 
@@ -619,7 +618,7 @@ class PoseHighResolutionNet(nn.Module):
         logger.info('=> init weights from normal distribution')
         for m in self.modules():
             if isinstance(m, nn.Conv1d):
-                # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                #nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 nn.init.normal_(m.weight, std=0.001)
                 for name, _ in m.named_parameters():
                     if name in ['bias']:

@@ -56,7 +56,7 @@ pip install -r requirements.txt
 
 ### Evaluation 
 ```
-python HRNet_GCN_WB.py --gcn {gcn_name}  --evaluate checkpoint/{weight_name}.pth.tar
+python HRNet_GCN_WB.py --gcn {gcn_name}  --evaluate checkpoint/{weight_name}.pth.tar -cfg checkpoint/w32_adam_lr1e-3.yaml
 ```
 
 ### Training 
