@@ -3,10 +3,7 @@
 <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/></a>
 <p align="center"><img src="img.png" width="100%" alt="" /></p>
 
-<video controls width="600">
-  <source src="video.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![Demo](video.gif)
 
 This repository contains the pytorch implementation of the approach described in the paper:
 > Mingyu Zhang, Qing Gao , Yuanchuan Lai, Ye Zhang, Yulan Guo 
