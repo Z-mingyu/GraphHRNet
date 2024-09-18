@@ -3,7 +3,7 @@
 <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/></a>
 <p align="center"><img src="img.png" width="100%" alt="" /></p>
 
-![Demo](video.gif)
+![Demo](demo.gif)
 
 This repository contains the pytorch implementation of the approach described in the paper:
 > Mingyu Zhang, Qing Gao , Yuanchuan Lai, Ye Zhang, Yulan Guo 
