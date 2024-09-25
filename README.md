@@ -6,7 +6,7 @@
 ![Demo](demo.gif)
 
 This repository contains the pytorch implementation of the approach described in the paper:
-> Mingyu Zhang, Qing Gao , Yuanchuan Lai, Ye Zhang, Yulan Guo 
+> Mingyu Zhang, Qing Gao , Yuanchuan Lai, Ye Zhang, Tao Chang, Yulan Guo 
 [3D Whole-body Pose Estimation Using Graph High-Resolution Network for Humanoid Robot Teleoperation](https://github.com/Z-mingyu/GraphHRNet)
 
 
